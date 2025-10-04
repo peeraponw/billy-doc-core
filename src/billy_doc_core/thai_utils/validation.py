@@ -201,10 +201,11 @@ class ThaiBusinessValidator:
 
         try:
             # Validate required fields
-            required_fields = ['customer_name', 'amount', 'document_type']
-            for field in required_fields:
-                if field not in document_data or not document_data[field]:
-                    errors.append(f"Required field '{field}' is missing")
+            if 'customer_name' not in document_data or not document_data['customer_name']:
+                errors.append("Required field 'customer_name' is missing")
+
+            if 'document_type' not in document_data or not document_data['document_type']:
+                errors.append("Required field 'document_type' is missing")
 
             # Validate customer name
             if 'customer_name' in document_data:
@@ -212,6 +213,14 @@ class ThaiBusinessValidator:
                     cls.validate_thai_text(document_data['customer_name'], 'customer_name')
                 except ValueError as e:
                     errors.append(str(e))
+
+            # Validate line amounts if provided
+            if 'line_amounts' in document_data:
+                for i, amount in enumerate(document_data['line_amounts']):
+                    if not isinstance(amount, (int, float)):
+                        errors.append(f"Line item {i+1} amount must be numeric, got {type(amount)}")
+                    elif amount <= 0:
+                        errors.append(f"Line item {i+1} amount must be positive")
 
             # Validate tax ID if provided
             if 'tax_id' in document_data and document_data['tax_id']:

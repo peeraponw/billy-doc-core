@@ -217,6 +217,9 @@ class DocumentGenerateRequest(BaseModel):
     items: List[dict] = Field(..., min_items=1)
     note: Optional[str] = None
     language: Language = Language.th
+    header_logo: str = "blank.png"
+    footer_logo: str = "blank.png"
+    signature: str = "blank.png"
 
 class DocumentResponse(BaseModel):
     id: str

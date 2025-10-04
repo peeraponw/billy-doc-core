@@ -37,35 +37,57 @@ class DocumentService:
         self.env.filters["format_date_thai_eng"] = format_thai_date
 
     def _get_image_data_url(self, image_path: str) -> str:
-        """Convert image file to data URL."""
-        if not image_path:
+        """Convert image file to data URL with support for PNG and JPG."""
+        if not image_path or image_path == "blank.png":
             return ""
+
         try:
             full_path = self.assets_dir / image_path
             if not full_path.exists():
+                print(f"Warning: Asset file not found: {image_path}")
                 return ""
+
             with open(full_path, "rb") as img_file:
                 encoded = base64.b64encode(img_file.read()).decode()
-                mime_type = (
-                    "image/png" if image_path.lower().endswith(".png") else "image/jpeg"
-                )
+
+                # Determine MIME type based on file extension
+                if image_path.lower().endswith('.png'):
+                    mime_type = "image/png"
+                elif image_path.lower().endswith('.jpg') or image_path.lower().endswith('.jpeg'):
+                    mime_type = "image/jpeg"
+                else:
+                    print(f"Warning: Unsupported image format: {image_path}")
+                    return ""
+
                 return f"data:{mime_type};base64,{encoded}"
+
         except Exception as e:
             print(f"Error loading image {image_path}: {e}")
             return ""
 
     async def _generate_pdf(
-        self, template_name: str, data: Union[QuotationDoc, InvoiceDoc, ReceiptDoc]
+        self, template_name: str, data: Union[QuotationDoc, InvoiceDoc, ReceiptDoc], customer: Customer, items: list
     ) -> bytes:
-        """Generic PDF generation method."""
+        """Generic PDF generation method matching example pattern."""
         template = self.env.get_template(template_name)
 
-        # Default company snapshot if not provided
-        company = data.company if hasattr(data, 'company') else self._get_default_company()
+        # Process signature image
+        signature_image = ""
+        if data.company.signature:
+            signature_image = self._get_image_data_url(data.company.signature)
+
+        # Process header and footer logos
+        header_logo = self._get_image_data_url(data.company.header_logo)
+        footer_logo = self._get_image_data_url(data.company.footer_logo)
 
         context = {
             "data": data,
-            "company_config": company,
+            "company_config": data.company,
+            "customer": customer,
+            "items": items,
+            "signature_image": signature_image,
+            "header_logo": header_logo,
+            "footer_logo": footer_logo,
             "current_date": date.today(),
         }
 
@@ -105,17 +127,17 @@ class DocumentService:
             footer_logo="",
         )
 
-    async def generate_quotation_pdf(self, quotation: QuotationDoc) -> bytes:
+    async def generate_quotation_pdf(self, quotation: QuotationDoc, customer: Customer, items: list) -> bytes:
         """Generate PDF for a quotation."""
-        return await self._generate_pdf("quotation.html", quotation)
+        return await self._generate_pdf("quotation.html", quotation, customer, items)
 
-    async def generate_invoice_pdf(self, invoice: InvoiceDoc) -> bytes:
+    async def generate_invoice_pdf(self, invoice: InvoiceDoc, customer: Customer, items: list) -> bytes:
         """Generate PDF for an invoice."""
-        return await self._generate_pdf("invoice.html", invoice)
+        return await self._generate_pdf("invoice.html", invoice, customer, items)
 
-    async def generate_receipt_pdf(self, receipt: ReceiptDoc) -> bytes:
+    async def generate_receipt_pdf(self, receipt: ReceiptDoc, customer: Customer, items: list) -> bytes:
         """Generate PDF for a receipt."""
-        return await self._generate_pdf("receipt.html", receipt)
+        return await self._generate_pdf("receipt.html", receipt, customer, items)
 
     def save_document(self, document_id: str, pdf_bytes: bytes) -> str:
         """Save PDF document to file system with performance monitoring."""

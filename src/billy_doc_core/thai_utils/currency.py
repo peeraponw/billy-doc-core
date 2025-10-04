@@ -1,7 +1,8 @@
 from typing import Union
+from decimal import Decimal
 
 
-def thai_number_to_words(amount: Union[int, float]) -> str:
+def thai_number_to_words(amount: Union[int, float, Decimal]) -> str:
     """
     Convert numeric amount to Thai words for business documents.
 
@@ -24,7 +25,7 @@ def thai_number_to_words(amount: Union[int, float]) -> str:
         >>> thai_number_to_words(123.50)
         "หนึ่งร้อยยี่สิบสามบาทห้าสิบบสตางค์"
     """
-    if not isinstance(amount, (int, float)):
+    if not isinstance(amount, (int, float, Decimal)):
         raise TypeError("Amount must be numeric")
 
     if amount < 0:

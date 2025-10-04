@@ -145,3 +145,9 @@ output/
 *.pdf
 *.log
 debug.log
+
+# Assets (keep only blank.png in git)
+assets/*
+!assets/blank.png
+
+local

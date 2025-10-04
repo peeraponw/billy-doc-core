@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import Response
 from pydantic import ValidationError
 
+from decimal import Decimal
 from billy_doc_core.models.models import (
     DocumentGenerateRequest,
     DocumentResponse,
@@ -34,9 +35,21 @@ async def generate_document(request: DocumentGenerateRequest):
     """Generate a new document (quotation, invoice, or receipt)."""
     try:
         # Validate Thai business standards
+        # Calculate line totals for validation
+        line_totals = []
+        for item in request.items:
+            qty = item.get("qty", 1)
+            price = item.get("price", 0)
+            if not isinstance(qty, (int, float)) or not isinstance(price, (int, float)):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid numeric values in items: qty={qty}, price={price}"
+                )
+            line_totals.append(qty * price)
+
         validation_errors = ThaiBusinessValidator.validate_document_standards({
             "customer_name": request.customer_name,
-            "amount": sum(item.get("qty", 1) * item.get("price", 0) for item in request.items),
+            "line_amounts": line_totals,
             "document_type": request.document_type,
         })
 
@@ -74,20 +87,20 @@ async def generate_document(request: DocumentGenerateRequest):
 
         # Create document lines
         lines = []
-        subtotal = 0
+        subtotal = 0.0
         for item in request.items:
             line_id = str(uuid.uuid4())
-            qty = item.get("qty", 1)
-            price = item.get("price", 0)
+            qty = float(item.get("qty", 1))
+            price = float(item.get("price", 0))
             line_total = qty * price
             subtotal += line_total
 
             line = DocumentLine(
                 id=line_id,
                 description=item.get("description", ""),
-                qty=qty,
-                unit_price=price,
-                line_total=line_total,
+                qty=Decimal(str(qty)),
+                unit_price=Decimal(str(price)),
+                line_total=Decimal(str(line_total)),
             )
             lines.append(line)
 
@@ -98,13 +111,19 @@ async def generate_document(request: DocumentGenerateRequest):
 
         totals = DocumentTotals(
             currency=THAI_BAHT_CURRENCY,
-            subtotal=subtotal,
-            tax=tax_amount,
-            total=total,
+            subtotal=Decimal(str(subtotal)),
+            tax=Decimal(str(tax_amount)),
+            total=Decimal(str(total)),
         )
 
-        # Create company snapshot from constants
-        company = CompanySnapshot(**DEFAULT_COMPANY)
+        # Create company snapshot with custom logos and signature
+        company_data = DEFAULT_COMPANY.copy()
+        company_data.update({
+            "header_logo": request.header_logo,
+            "footer_logo": request.footer_logo,
+            "signature": request.signature,
+        })
+        company = CompanySnapshot(**company_data)
 
         # Create document based on type
         if request.document_type == "quotation":
@@ -119,7 +138,9 @@ async def generate_document(request: DocumentGenerateRequest):
                 lines=lines,
                 totals=totals,
             )
-            pdf_bytes = await document_service.generate_quotation_pdf(document)
+            # Convert lines to items format for template
+            items = [{"description": line.description, "qty": line.qty, "price": line.unit_price, "total": line.line_total} for line in lines]
+            pdf_bytes = await document_service.generate_quotation_pdf(document, customer, items)
 
         elif request.document_type == "invoice":
             document = InvoiceDoc(
@@ -133,7 +154,8 @@ async def generate_document(request: DocumentGenerateRequest):
                 lines=lines,
                 totals=totals,
             )
-            pdf_bytes = await document_service.generate_invoice_pdf(document)
+            items = [{"description": line.description, "qty": line.qty, "price": line.unit_price, "total": line.line_total} for line in lines]
+            pdf_bytes = await document_service.generate_invoice_pdf(document, customer, items)
 
         elif request.document_type == "receipt":
             document = ReceiptDoc(
@@ -145,9 +167,10 @@ async def generate_document(request: DocumentGenerateRequest):
                 note=request.note,
                 language=request.language,
                 allocation_ids=[],
-                amount_total=total,
+                amount_total=Decimal(str(total)),
             )
-            pdf_bytes = await document_service.generate_receipt_pdf(document)
+            items = [{"description": line.description, "qty": line.qty, "price": line.unit_price, "total": line.line_total} for line in lines]
+            pdf_bytes = await document_service.generate_receipt_pdf(document, customer, items)
 
         else:
             raise HTTPException(
