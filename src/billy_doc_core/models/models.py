@@ -184,6 +184,8 @@ class InvoiceDoc(BaseDocument):
 class ReceiptDoc(BaseDocument):
     allocation_ids: List[str]  # provenance to allocations
     amount_total: Decimal = Field(ge=Decimal("0"))
+    lines: List[DocumentLine]
+    totals: DocumentTotals
 
 
 # ===== Payments and allocations (ledger layer) =====
@@ -214,7 +216,7 @@ class DocumentGenerateRequest(BaseModel):
     customer_name: str = Field(..., min_length=1, max_length=200)
     customer_email: Optional[str] = None
     customer_address: Optional[str] = None
-    items: List[dict] = Field(..., min_items=1)
+    items: List[dict] = Field(..., min_length=1)
     note: Optional[str] = None
     language: Language = Language.th
     header_logo: str = "blank.png"

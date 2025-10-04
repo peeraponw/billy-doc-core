@@ -168,6 +168,8 @@ async def generate_document(request: DocumentGenerateRequest):
                 language=request.language,
                 allocation_ids=[],
                 amount_total=Decimal(str(total)),
+                lines=lines,
+                totals=totals,
             )
             items = [{"description": line.description, "qty": line.qty, "price": line.unit_price, "total": line.line_total} for line in lines]
             pdf_bytes = await document_service.generate_receipt_pdf(document, customer, items)

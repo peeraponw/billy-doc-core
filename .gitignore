@@ -147,7 +147,7 @@ output/
 debug.log
 
 # Assets (keep only blank.png in git)
-assets/*
-!assets/blank.png
+src/billy_doc_core/assets/*
+!src/billy_doc_core/assets/blank.png
 
 local
