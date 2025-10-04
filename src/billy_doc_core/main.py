@@ -17,6 +17,7 @@ from billy_doc_core.const import (
     HOST,
     PORT,
 )
+from billy_doc_core.api.v1.documents import router as documents_router
 
 
 @asynccontextmanager
@@ -54,6 +55,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(documents_router, prefix="/api/v1")
 
 
 @app.get("/")

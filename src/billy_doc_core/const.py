@@ -44,3 +44,18 @@ API_KEY_HEADER: Final[str] = "X-API-Key"
 # Thai Business Constants
 THAI_BAHT_CURRENCY: Final[str] = "THB"
 MAX_THAI_AMOUNT: Final[int] = 1_000_000_000  # 1 billion Baht
+
+# Default Company Configuration
+DEFAULT_COMPANY: Final[dict] = {
+    "name": "บริษัท บิลลี่ ด็อก จำกัด",
+    "address_1": "123 ถนนสุขุมวิท",
+    "address_2": "แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110",
+    "tel": "02-123-4567",
+    "tax_id": "0123456789012",
+    "bank_account": "123-4-56789-0",
+    "header_logo": "",
+    "footer_logo": "",
+}
+
+# Tax Configuration
+DEFAULT_TAX_RATE: Final[float] = 0.07  # 7% VAT for Thailand

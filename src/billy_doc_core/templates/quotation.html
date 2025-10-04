@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ใบเสนอราคา - {{ data.document_no }}</title>
+    <style>
+        @font-face {
+            font-family: 'Sarabun';
+            src: url('file:///usr/local/share/fonts/sarabun/Sarabun-Regular.ttf') format('truetype');
+            font-weight: normal;
+        }
+        @font-face {
+            font-family: 'Sarabun';
+            src: url('file:///usr/local/share/fonts/sarabun/Sarabun-Bold.ttf') format('truetype');
+            font-weight: bold;
+        }
+        body {
+            font-family: 'Sarabun', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .company-info {
+            margin-bottom: 20px;
+        }
+        .customer-info {
+            margin-bottom: 20px;
+        }
+        .document-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .table th, .table td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+        .table th {
+            background-color: #f0f0f0;
+        }
+        .totals {
+            margin-top: 20px;
+            text-align: right;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 12px;
+        }
+        .right-align {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if company_config.header_logo %}
+        <img src="{{ company_config.header_logo }}" alt="Company Logo" style="max-height: 100px;">
+        {% endif %}
+        <div class="document-title">ใบเสนอราคา<br>QUOTATION</div>
+        <div>เลขที่: {{ data.document_no }}</div>
+        <div>วันที่: {{ data.issue_date | format_date_thai_eng }}</div>
+    </div>
+
+    <div class="company-info">
+        <strong>ผู้เสนอราคา / From:</strong><br>
+        {{ company_config.name }}<br>
+        {{ company_config.address_1 }}<br>
+        {{ company_config.address_2 }}<br>
+        โทร: {{ company_config.tel }}<br>
+        เลขประจำตัวผู้เสียภาษี: {{ company_config.tax_id }}
+    </div>
+
+    <div class="customer-info">
+        <strong>ผู้รับใบเสนอราคา / To:</strong><br>
+        คุณลูกค้า<br>
+        ที่อยู่: กรุณาระบุที่อยู่<br>
+        โทร: -
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ลำดับ<br>No.</th>
+                <th>รายการ<br>Description</th>
+                <th>จำนวน<br>Qty</th>
+                <th>ราคาต่อหน่วย<br>Unit Price</th>
+                <th>จำนวนเงิน<br>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in data.lines %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ line.description }}</td>
+                <td class="right-align">{{ line.qty }}</td>
+                <td class="right-align">{{ line.unit_price }}</td>
+                <td class="right-align">{{ line.line_total }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div>รวมเงิน / Subtotal: {{ data.totals.subtotal }} {{ data.totals.currency }}</div>
+        <div>ภาษีมูลค่าเพิ่ม 7% / VAT 7%: {{ data.totals.tax }} {{ data.totals.currency }}</div>
+        <div><strong>รวมทั้งสิ้น / Total: {{ data.totals.total }} {{ data.totals.currency }}</strong></div>
+        <div>จำนวนเงินตัวอักษร: {{ data.totals.total | number_to_thai_text }}</div>
+    </div>
+
+    {% if data.note %}
+    <div class="notes" style="margin-top: 20px;">
+        <strong>หมายเหตุ / Note:</strong><br>
+        {{ data.note }}
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <div>บริษัท บิลลี่ ด็อก จำกัด</div>
+        <div>123 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110</div>
+        <div>โทร: 02-123-4567 | เลขประจำตัวผู้เสียภาษี: 0123456789012</div>
+    </div>
+</body>
+</html>
