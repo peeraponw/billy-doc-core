@@ -166,11 +166,6 @@ class ThaiBusinessValidator:
         if len(sanitized) == 0:
             raise ValueError(f"{field_name} cannot be only whitespace")
 
-        # Check for minimum Thai character content
-        thai_chars = re.findall(r'[\u0E00-\u0E7F]', sanitized)
-        if len(thai_chars) < len(sanitized) * 0.3:  # At least 30% Thai characters
-            raise ValueError(f"{field_name} should contain Thai characters")
-
         return True
 
     @classmethod

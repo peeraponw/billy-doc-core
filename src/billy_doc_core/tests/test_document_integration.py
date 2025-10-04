@@ -358,8 +358,8 @@ class TestDocumentGenerationIntegration:
         """Test error handling for invalid document type."""
         payload = {
             "document_type": "invalid_type",
-            "customer_name": "Test Customer",
-            "items": [{"description": "Test", "qty": 1, "price": 1000.0}]
+            "customer_name": "Test Customer",  # Pure English name
+            "items": [{"description": "รายการทดสอบ", "qty": 1, "price": 1000.0}]
         }
 
         response = requests.post(
@@ -374,7 +374,7 @@ class TestDocumentGenerationIntegration:
         """Test error handling when no items provided."""
         payload = {
             "document_type": "quotation",
-            "customer_name": "Test Customer",
+            "customer_name": "Test Customer",  # Pure English name
             "items": []
         }
 

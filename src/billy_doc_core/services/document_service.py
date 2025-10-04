@@ -42,13 +42,31 @@ class DocumentService:
             return ""
 
         try:
+            # Check if assets directory exists and is accessible
+            if not self.assets_dir.exists():
+                raise FileNotFoundError(f"Assets directory not found: {self.assets_dir}")
+
+            if not os.access(self.assets_dir, os.R_OK):
+                raise PermissionError(f"Permission denied accessing assets directory: {self.assets_dir}")
+
             full_path = self.assets_dir / image_path
+
+            # Check if file exists
             if not full_path.exists():
-                print(f"Warning: Asset file not found: {image_path}")
-                return ""
+                raise FileNotFoundError(f"Asset file not found: {image_path}")
+
+            # Check file size before reading
+            file_size = full_path.stat().st_size
+            if file_size > MAX_FILE_SIZE:
+                raise ValueError(f"Asset file too large: {image_path} ({file_size} bytes) exceeds maximum allowed size {MAX_FILE_SIZE}")
+
+            # Check if file is readable
+            if not os.access(full_path, os.R_OK):
+                raise PermissionError(f"Permission denied accessing asset file: {image_path}")
 
             with open(full_path, "rb") as img_file:
-                encoded = base64.b64encode(img_file.read()).decode()
+                file_content = img_file.read()
+                encoded = base64.b64encode(file_content).decode()
 
                 # Determine MIME type based on file extension
                 if image_path.lower().endswith('.png'):
@@ -56,14 +74,15 @@ class DocumentService:
                 elif image_path.lower().endswith('.jpg') or image_path.lower().endswith('.jpeg'):
                     mime_type = "image/jpeg"
                 else:
-                    print(f"Warning: Unsupported image format: {image_path}")
-                    return ""
+                    raise ValueError(f"Unsupported image format: {image_path}. Supported formats: PNG, JPG, JPEG")
 
                 return f"data:{mime_type};base64,{encoded}"
 
+        except (FileNotFoundError, PermissionError, ValueError):
+            # Re-raise these specific exceptions to be handled by the calling code
+            raise
         except Exception as e:
-            print(f"Error loading image {image_path}: {e}")
-            return ""
+            raise IOError(f"Error loading image {image_path}: {e}")
 
     async def _generate_pdf(
         self, template_name: str, data: Union[QuotationDoc, InvoiceDoc, ReceiptDoc], customer: Customer, items: list
