@@ -145,3 +145,5 @@ output/
 *.pdf
 *.log
 debug.log
+
+assets
