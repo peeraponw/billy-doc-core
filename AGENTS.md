@@ -18,5 +18,7 @@ mandatory and contains enforceable, factual rules.
   API naming, and performance guidance.
 - [Workflow & Operations](agents/workflow-and-ops.md) — rg-only search rule, git workflow,
   container ignores, database naming, and reference links.
+- [AI Assistant Rules](agents/ai-assistant-rules.md)
+- [Pre-Commit Checklist](agents/pre-commit-checklist.md)
 
 Keep these files factual and update them whenever standards evolve.
